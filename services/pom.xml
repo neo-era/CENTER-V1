@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Parent POM cho toàn bộ backend CENTER-V1. Quản lý version tập trung. -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.4</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>vn.center</groupId>
+  <artifactId>center-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>CENTER-V1 Backend</name>
+  <description>Phần mềm điều khiển trung tâm — chiếu sáng đô thị và tín hiệu giao thông</description>
+
+  <properties>
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Version tập trung (BOM). Module con KHÔNG khai version riêng. -->
+    <eclipse-milo.version>0.6.14</eclipse-milo.version>
+    <springdoc.version>2.6.0</springdoc.version>
+    <testcontainers.version>1.20.2</testcontainers.version>
+    <timescaledb.note>dùng PostgreSQL driver + extension TimescaleDB</timescaledb.note>
+  </properties>
+
+  <!-- Danh sách module: bỏ comment khi module được hiện thực (xem docs/PLAN.md). -->
+  <modules>
+    <module>libs/events</module>
+    <!-- <module>api-gateway</module> -->
+    <!-- <module>opcua-gateway</module> -->
+    <!-- <module>ingestion</module> -->
+    <!-- <module>device-registry</module> -->
+    <!-- <module>lighting-control</module> -->
+    <!-- <module>traffic-signal</module> -->
+    <!-- <module>scheduling</module> -->
+    <!-- <module>alerting</module> -->
+    <!-- <module>maintenance</module> -->
+    <!-- <module>reporting</module> -->
+    <!-- <module>gis</module> -->
+    <!-- <module>audit</module> -->
+    <!-- <module>notification</module> -->
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springdoc</groupId>
+        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        <version>${springdoc.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.milo</groupId>
+        <artifactId>sdk-client</artifactId>
+        <version>${eclipse-milo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.milo</groupId>
+        <artifactId>sdk-server</artifactId>
+        <version>${eclipse-milo.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- Spotless: format/lint bắt buộc (rules/10) -->
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>2.43.0</version>
+          <configuration>
+            <java>
+              <googleJavaFormat/>
+              <removeUnusedImports/>
+            </java>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

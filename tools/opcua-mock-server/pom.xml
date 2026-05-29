@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Công cụ dev: OPC-UA Server mô phỏng tủ chiếu sáng. KHÔNG nằm trong reactor services/. -->
+  <parent>
+    <groupId>vn.center</groupId>
+    <artifactId>center-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <relativePath>../../services/pom.xml</relativePath>
+  </parent>
+
+  <artifactId>opcua-mock-server</artifactId>
+  <name>CENTER-V1 OPC-UA Mock Server</name>
+  <description>OPC-UA Server mô phỏng tủ điều khiển chiếu sáng theo hợp đồng tag (dev/test)</description>
+
+  <properties>
+    <main.class>vn.center.mock.MockServerApplication</main.class>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.milo</groupId>
+      <artifactId>sdk-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+
+    <!-- Milo 0.6.x dùng javax.xml.bind (JAXB 2.x) đã bị loại khỏi JDK 11+ -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>2.3.9</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- Test: dùng OPC-UA client để kiểm tra server -->
+    <dependency>
+      <groupId>org.eclipse.milo</groupId>
+      <artifactId>sdk-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>opcua-mock-server</finalName>
+    <plugins>
+      <!-- Chạy nhanh: mvn -q exec:java -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.1</version>
+        <configuration>
+          <mainClass>${main.class}</mainClass>
+        </configuration>
+      </plugin>
+
+      <!-- Đóng gói fat-jar chạy được: java -jar target/opcua-mock-server.jar -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.7.1</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <mainClass>${main.class}</mainClass>
+            </manifest>
+          </archive>
+          <appendAssemblyId>false</appendAssemblyId>
+          <finalName>opcua-mock-server</finalName>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-fat-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

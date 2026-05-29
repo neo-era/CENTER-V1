@@ -1,0 +1,107 @@
+# Hạ tầng phát triển CENTER-V1 (CHỈ dùng cho dev — không dùng cho production).
+# Khởi động: docker compose -f deploy/docker/docker-compose.dev.yml up -d
+# Mật khẩu ở đây là giá trị dev. Production: lấy bí mật từ Vault (xem rules/70-security.md).
+
+name: center-v1-dev
+
+services:
+  # --- PostgreSQL + PostGIS + TimescaleDB (gộp cho dev; production tách instance) ---
+  postgres:
+    image: timescale/timescaledb-ha:pg16  # đã kèm TimescaleDB + PostGIS
+    environment:
+      POSTGRES_USER: center
+      POSTGRES_PASSWORD: center_dev_pw
+      POSTGRES_DB: center
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U center"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Redis (cache, lock, rate limit) ---
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes: [redisdata:/data]
+
+  # --- Kafka (KRaft, không cần Zookeeper) ---
+  kafka:
+    image: bitnami/kafka:3.8
+    environment:
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: "controller,broker"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+    ports: ["9092:9092"]
+    volumes: [kafkadata:/bitnami/kafka]
+
+  # --- Keycloak (IAM: RBAC, OAuth2/OIDC, SAML, MFA) ---
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    command: ["start-dev"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin_dev_pw
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/center
+      KC_DB_USERNAME: center
+      KC_DB_PASSWORD: center_dev_pw
+    ports: ["8080:8080"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # --- MinIO (S3: ảnh duy tu, backup, export) ---
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: center
+      MINIO_ROOT_PASSWORD: center_dev_pw
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+
+  # --- Vault (KMS/secret — chế độ dev) ---
+  vault:
+    image: hashicorp/vault:1.17
+    cap_add: [IPC_LOCK]
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: root_dev_token
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    ports: ["8200:8200"]
+
+  # --- GeoServer (WMS/WFS/WMTS cho interop GIS) ---
+  geoserver:
+    image: docker.osgeo.org/geoserver:2.25.x
+    environment:
+      GEOSERVER_ADMIN_USER: admin
+      GEOSERVER_ADMIN_PASSWORD: geoserver_dev_pw
+    ports: ["8081:8080"]
+
+  # --- EMQX (MQTT broker cho thiết bị nhẹ) ---
+  emqx:
+    image: emqx/emqx:5.7
+    ports: ["1883:1883", "18083:18083"]
+
+  # --- Quan sát (Prometheus + Grafana) ---
+  prometheus:
+    image: prom/prometheus:latest
+    ports: ["9090:9090"]
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: grafana_dev_pw
+    ports: ["3001:3000"]
+
+volumes:
+  pgdata:
+  redisdata:
+  kafkadata:
+  miniodata:

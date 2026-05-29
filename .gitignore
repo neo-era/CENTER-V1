@@ -1,0 +1,50 @@
+# Java / Maven
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/
+
+# Node / Web
+node_modules/
+dist/
+.vite/
+*.local
+coverage/
+
+# Android
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+*.apk
+*.aab
+local.properties
+
+# iOS
+mobile/ios/build/
+mobile/ios/DerivedData/
+*.xcuserstate
+Pods/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Secrets & env — KHÔNG commit (lấy từ Vault)
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.keystore
+secrets/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / tmp
+*.log
+tmp/
